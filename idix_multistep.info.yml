@@ -1,0 +1,7 @@
+name: 'IDIX Multistep'
+type: module
+description: 'Provide simple multi step form'
+package: IDIX
+dependencies:
+  - drupal:field_group
+core: '8.x'

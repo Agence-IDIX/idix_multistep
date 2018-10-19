@@ -1,0 +1,7 @@
+{% if steps|length > 0 %}
+<div class="multi-steps-label">
+    {% for step_number, step in steps %}
+    <div class="step-label{{ step_number == current_step ? ' active' }}">{{ step.label }}</div>
+    {% endfor %}
+</div>
+{% endif %}

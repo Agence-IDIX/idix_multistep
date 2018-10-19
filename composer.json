@@ -1,0 +1,20 @@
+{
+  "name": "idix/idix_multistep",
+  "description": "Enables the creation of webforms and questionnaires.",
+  "type": "drupal-custom-module",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "VitaliyB98",
+      "role": "creator"
+    },
+    {
+      "name": "Nicolas Bugeja",
+      "email": "nicolas.bugeja@idix.fr",
+      "role": "Maintainer"
+    }
+  ],
+  "require": {
+    "drupal/field_group": "^1.0"
+  }
+}

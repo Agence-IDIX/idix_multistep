@@ -1,0 +1,3 @@
+services:
+  multistep_factory:
+    class: Drupal\idix_multistep\MultistepFactory

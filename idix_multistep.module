@@ -1,0 +1,143 @@
+<?php
+
+/**
+ * @file
+ * Contains idix_multistep.module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\idix_multistep\MultistepController;
+
+function idix_multistep_theme($existing, $type, $theme, $path) {
+  return [
+    'multistep_indicator' => [
+      'template' => 'multistep/indicator',
+      'variables' => [
+        'steps' => [],
+        'current_step' => 0,
+      ]
+    ]
+  ];
+}
+
+function idix_multistep_preprocess_multistep_indicator(&$vars){
+  $steps = $vars['steps'];
+  $steps_to_show = [];
+  foreach($steps as $step_number => $step){
+    $format_settings = $step->format_settings;
+    if ($format_settings['show_step_title']) {
+      $steps_to_show[$step_number] = $step;
+    }
+  }
+  $vars['raw_steps'] = $steps;
+  $vars['steps'] = $steps_to_show;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function idix_multistep_form_alter(&$form, FormStateInterface &$form_state) {
+  // Check if form using form group multi step field.
+  /** @var \Drupal\idix_multistep\MultistepFactory $multistep_factory */
+  $multistep_factory = \Drupal::service('multistep_factory');
+  if ($multistep_factory->check_form_multistep($form)) {
+
+    /** @var \Drupal\idix_multistep\MultistepController $multiStep */
+    if ($multiStep = $form_state->get('multistep_controller')) {
+      $multiStep->updateStepInfo();
+    }
+    else {
+      $multiStep = $multistep_factory->getMultiStepController($form, $form_state);
+    }
+
+    $multiStep->rebuildForm($form);
+
+    $form_state->set('multistep_controller', $multiStep);
+
+    // Attach style library.
+    $form['#attached']['library'][] = 'idix_multistep/idix_multistep';
+  }
+}
+
+/**
+ * Validator handler for next button.
+ */
+function idix_multistep_register_next_step(&$form, FormStateInterface $form_state) {
+  /** @var \Drupal\idix_multistep\MultistepController $multiStep */
+  $multiStep = $form_state->get('multistep_controller');
+
+  // Need update form state after submission.
+  $multiStep->setFormState($form_state);
+
+  $multiStep->saveInputValues();
+  $multiStep->saveStoredValues();
+
+  $multiStep->increaseStep();
+
+  // Fill field value previous step.
+  $stored_input = $multiStep->getInputValues();
+
+  $current_step = $multiStep->getCurrentStep();
+
+  if (isset($stored_input[$current_step]) && !empty($stored_input[$current_step])) {
+    $form_state->setUserInput($stored_input[$current_step]);
+  }
+
+  $form_state->set('multistep_controller', $multiStep);
+
+  $form_state->setRebuild();
+}
+
+/**
+ * Validator handler for back button.
+ */
+function idix_multistep_register_back(&$form, FormStateInterface $form_state) {
+  /** @var \Drupal\idix_multistep\MultistepController $multiStep */
+  $multiStep = $form_state->get('multistep_controller');
+
+  // Need update form state after submission.
+  $multiStep->setFormState($form_state);
+
+  // If current_step more than 0.
+  if ($multiStep->getCurrentStep()) {
+    $multiStep->reduceStep();
+
+    // Fill field value previous step.
+    $stored_input = $multiStep->getInputValues();
+
+    $current_step = $multiStep->getCurrentStep();
+
+    if (isset($stored_input[$current_step]) && !empty($stored_input[$current_step])) {
+      $form_state->setUserInput($stored_input[$current_step]);
+    }
+
+    $form_state->set('multistep_controller', $multiStep);
+    $form_state->setRebuild();
+  }
+
+}
+
+/**
+ * Validation handler.
+ */
+function idix_multistep_multistep_validate(&$form, FormStateInterface &$form_state) {
+  /** @var \Drupal\idix_multistep\MultistepController $multiStep */
+  $multiStep = $form_state->get('multistep_controller');
+
+  // Need update form state after submission.
+  $multiStep->setFormState($form_state);
+
+  $stored_values = $multiStep->getStoredValues();
+
+  if (!empty($stored_values)) {
+    foreach ($stored_values as $step => $value_list) {
+      foreach ($value_list as $field_name => $field_value) {
+        $form_state->setValue($field_name, $field_value);
+      }
+    }
+  }
+  $form_state->set('multistep_controller', $multiStep);
+
+}
+
+
