@@ -53,9 +53,6 @@ function idix_multistep_form_alter(&$form, FormStateInterface &$form_state) {
     $multiStep->rebuildForm($form);
 
     $form_state->set('multistep_controller', $multiStep);
-
-    // Attach style library.
-    $form['#attached']['library'][] = 'idix_multistep/idix_multistep';
   }
 }
 
