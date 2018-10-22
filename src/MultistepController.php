@@ -102,6 +102,10 @@ class MultistepController extends FormStep {
     $this->stepIndicator = $multistep_factory->getStepIndicator($form, $this->formState, $this->currentStep);
     $this->stepIndicator->render($form);
 
+    // Add additional button for form.
+    $this->formButton = new FormButton($form, $this->formState, $this->currentStep);
+    $this->formButton->render($form);
+
     unset($form['actions']['next']['#limit_validation_errors']);
     foreach ($this->steps as $key => $step) {
       $all_children = $this->getAllChildren($step);
@@ -126,7 +130,11 @@ class MultistepController extends FormStep {
         else {
           foreach ($all_children as $child_id) {
             if (isset($form[$child_id])) {
-              $form['actions']['next']['#limit_validation_errors'][] = [$child_id];
+              if($this->currentStep == count($this->steps) - 1){
+                $form['actions']['submit']['#limit_validation_errors'][] = [$child_id];
+              }else{
+                $form['actions']['next']['#limit_validation_errors'][] = [$child_id];
+              }
             }
           }
         }
@@ -144,9 +152,6 @@ class MultistepController extends FormStep {
       }
     }
 
-    // Add additional button for form.
-    $this->formButton = new FormButton($form, $this->formState, $this->currentStep);
-    $this->formButton->render($form);
   }
 
 }

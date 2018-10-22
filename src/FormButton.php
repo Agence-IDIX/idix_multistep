@@ -45,6 +45,7 @@ class FormButton extends FormStep {
         '#validate' => ['idix_multistep_register_back'],
         '#submit' => [],
         '#limit_validation_errors' => [],
+        '#weight' => 0,
       ];
     }
   }
@@ -60,10 +61,12 @@ class FormButton extends FormStep {
 
     if (count($this->steps) - 1 != $this->currentStep) {
       $form['actions']['next'] = [
-        '#type' => 'button',
+        '#type' => 'submit',
         '#value' => $step_format_settings['next_button_text'],
         '#validate' => ['idix_multistep_register_next_step'],
+        '#limit_validation_errors' => [],
         '#submit' => [],
+        '#weight' => 0.1
       ];
       $form['actions']['submit']['#access'] = FALSE;
     }
@@ -83,8 +86,8 @@ class FormButton extends FormStep {
    *   Form array.
    */
   public function render(array &$form) {
-    $this->showNextButton($form);
     $this->showBackButton($form);
+    $this->showNextButton($form);
   }
 
 }
