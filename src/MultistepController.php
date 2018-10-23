@@ -114,27 +114,27 @@ class MultistepController extends FormStep {
         if ($key != $this->currentStep) {
           foreach ($all_children as $child_id) {
             if (isset($form[$child_id])) {
-              if ($this->currentStep != count($this->steps) - 1) {
+              /*if ($this->currentStep != count($this->steps) - 1) {
                 unset($form[$child_id]);
               }
-              else {
+              else {*/
                 $form[$child_id]['#access'] = FALSE;
                 // @todo need found solution with password.
                 if ($child_id == 'account' && isset($form[$child_id]['pass'])) {
                   $form[$child_id]['pass']['#required'] = FALSE;
                 }
-              }
+              /*}*/
             }
           }
         }
         else {
           foreach ($all_children as $child_id) {
             if (isset($form[$child_id])) {
-              if($this->currentStep == count($this->steps) - 1){
+              /*if($this->currentStep == count($this->steps) - 1){
                 $form['actions']['submit']['#limit_validation_errors'][] = [$child_id];
-              }else{
+              }else{*/
                 $form['actions']['next']['#limit_validation_errors'][] = [$child_id];
-              }
+              //}
             }
           }
         }
@@ -142,7 +142,7 @@ class MultistepController extends FormStep {
     }
 
     // Last step.
-    if ($this->currentStep == count($this->steps) - 1) {
+    /*if ($this->currentStep == count($this->steps) - 1) {
       foreach ($form as $element_key => $form_element) {
         if (is_array($form_element) && isset($form_element['#type'])) {
           if (isset($form['actions']['next']['#limit_validation_errors'])) {
@@ -150,7 +150,7 @@ class MultistepController extends FormStep {
           }
         }
       }
-    }
+    }*/
 
   }
 

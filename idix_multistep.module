@@ -82,8 +82,6 @@ function idix_multistep_register_next_step(&$form, FormStateInterface $form_stat
 
   $form_state->set('multistep_controller', $multiStep);
 
-  // Code temporaire pour éviter les soucis de validation d'image : WIP
-  // @todo : faire un truc qui fonctionne !!
   $form_object = $form_state->getFormObject();
   $form_object->validateForm($form, $form_state);
   $form_object->submitForm($form, $form_state);

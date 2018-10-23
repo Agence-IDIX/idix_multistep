@@ -59,23 +59,23 @@ class FormButton extends FormStep {
   private function showNextButton(array &$form) {
     $step_format_settings = $this->stepSettings->format_settings;
 
-    if (count($this->steps) - 1 != $this->currentStep) {
+    //if (count($this->steps) - 1 != $this->currentStep) {
       $form['actions']['next'] = [
         '#type' => 'submit',
-        '#value' => $step_format_settings['next_button_text'],
+        '#value' => (count($this->steps) - 1 != $this->currentStep) ? $step_format_settings['next_button_text'] : t('Save'),
         '#validate' => ['idix_multistep_register_next_step'],
         '#limit_validation_errors' => [],
         '#submit' => [],
         '#weight' => 0.1
       ];
       $form['actions']['submit']['#access'] = FALSE;
-    }
+    //}
 
     // On last step hide next button and show save button.
-    else {
-      $form['actions']['submit']['#access'] = TRUE;
-      array_unshift($form['#validate'], 'idix_multistep_multistep_validate');
-    }
+    //else {
+      //$form['actions']['submit']['#access'] = TRUE;
+      //array_unshift($form['#validate'], 'idix_multistep_multistep_validate');
+    //}
 
   }
 
