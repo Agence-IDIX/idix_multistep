@@ -156,6 +156,18 @@ class FormStep {
     return $this->stepSettings;
   }
 
+  public function getOneStepSettings($step){
+    if (isset($this->form['#fieldgroups'])) {
+      $form_steps = $this->getSteps();
+
+      if (!empty($form_steps) && isset($form_steps[$step])) {
+        return $form_steps[$step];
+      }
+    }
+
+    return [];
+  }
+
   /**
    * Fetch form step settings by current step.
    */

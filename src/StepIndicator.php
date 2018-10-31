@@ -39,20 +39,6 @@ class StepIndicator extends FormStep {
       '#current_step' => $this->currentStep,
     ];
 
-    /*$markup = '<div class="multi-steps-label">';
-    foreach ($this->steps as $step_number => $step) {
-      $format_settings = $step->format_settings;
-      if ($format_settings['show_step_title']) {
-        $active = $this->currentStep == $step_number ? ' active' : '';
-        $markup .= '<div class="step-label' . $active . '">';
-        $markup .= $step->label;
-        $markup .= '</div>';
-      }
-    }
-    $markup .= '</div>';
-
-    $steps_label['#markup'] = $markup;*/
-
     return $steps_label;
   }
 
@@ -62,9 +48,8 @@ class StepIndicator extends FormStep {
    * @param array $form
    *   Reference to form.
    */
-  public function render(array &$form) {
-    $form['#current_step'] = $this->currentStep;
-    $form['steps_label'] = $this->createIndicator();
+  public function getRender() {
+    return $this->createIndicator();
   }
 
 }

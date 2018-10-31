@@ -1,0 +1,5 @@
+general:
+  version: "8.x-1.0.0"
+  css:
+    state:
+      css/idix_multistep.css: {}
