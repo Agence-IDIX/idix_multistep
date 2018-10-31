@@ -2,6 +2,10 @@
 
 namespace Drupal\idix_multistep;
 
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Ajax\InvokeCommand;
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -19,27 +23,6 @@ class MultistepController extends FormStep {
   public $stepIndicator;
 
   /**
-   * Form button.
-   *
-   * @var FormButton
-   */
-  public $formButton;
-
-  /**
-   * Stored values from $form_state.
-   *
-   * @var array
-   */
-  protected $storedValues;
-
-  /**
-   * Input values from $form_state.
-   *
-   * @var array
-   */
-  protected $inputValues;
-
-  /**
    * MultistepController constructor.
    *
    * @param array $form
@@ -49,109 +32,161 @@ class MultistepController extends FormStep {
    */
   public function __construct(array &$form, FormStateInterface $form_state) {
     parent::__construct($form, $form_state);
-
-    // Initialize empty storage.
-    $this->inputValues = [];
-    $this->storedValues = [];
   }
 
-  /**
-   * Save input values from current step.
-   */
-  public function saveInputValues() {
-    $stored_input = $this->inputValues;
-    $stored_input[$this->currentStep] = $this->formState->getUserInput();
 
-    $this->inputValues = $stored_input;
-  }
-
-  /**
-   * Get input values.
-   */
-  public function getInputValues() {
-    return $this->inputValues;
-  }
-
-  /**
-   * Save stored values from current step.
-   */
-  public function saveStoredValues() {
-    $stored_values = $this->storedValues;
-    $stored_values[$this->currentStep] = $this->getStepValues($this->steps[$this->currentStep]);
-
-    $this->storedValues = $stored_values;
-  }
-
-  /**
-   * Get stored values.
-   */
-  public function getStoredValues() {
-    return $this->storedValues;
-  }
-
-  /**
-   * Prepare Multistep Form.
-   *
-   * @param array $form
-   *   Reference to form.
-   */
-  public function rebuildForm(array &$form) {
+  public function rebuildForm(array &$form){
     /** @var \Drupal\idix_multistep\MultistepFactory $multistep_factory */
     $multistep_factory = \Drupal::service('multistep_factory');
-    // Add step indicator.
-    $this->stepIndicator = $multistep_factory->getStepIndicator($form, $this->formState, $this->currentStep);
-    $this->stepIndicator->render($form);
 
-    // Add additional button for form.
-    $this->formButton = new FormButton($form, $this->formState, $this->currentStep);
-    $this->formButton->render($form);
+    $form['#attached']['library'][] = 'idix_multistep/general';
 
-    unset($form['actions']['next']['#limit_validation_errors']);
-    foreach ($this->steps as $key => $step) {
+    unset($form['#pre_render']);
+    unset($form['_field_layout']);
+
+    foreach($this->steps as $key => $step){
       $all_children = $this->getAllChildren($step);
       if (!empty($all_children)) {
-        // Another step.
-        if ($key != $this->currentStep) {
-          foreach ($all_children as $child_id) {
-            if (isset($form[$child_id])) {
-              if ($this->currentStep != count($this->steps) - 1) {
-                unset($form[$child_id]);
-              }
-              else {
-                $form[$child_id]['#access'] = FALSE;
-                // @todo need found solution with password.
-                if ($child_id == 'account' && isset($form[$child_id]['pass'])) {
-                  $form[$child_id]['pass']['#required'] = FALSE;
-                }
-              }
-            }
+        $step_key = 'step_' . $key . '_pane';
+        $form[$step_key] = [
+          '#type' => 'container',
+          '#id' => $step_key,
+          '#attributes' => [
+            'class' => [
+              'multistep_pane',
+              $key == 0 ? '' : 'multistep_pane_hidden'
+            ]
+          ]
+        ];
+
+        // Add step indicator.
+        $stepIndicator = $multistep_factory->getStepIndicator($form, $this->formState, $key);
+        $form[$step_key]['step_labels'] = $stepIndicator->getRender();
+
+        $limit_validation = [];
+
+        $form[$step_key]['messages'] = [
+          '#type' => 'container',
+          '#id' => $step_key . '_messages',
+          '#weight' => 0
+        ];
+
+        $form[$step_key]['fields'] = [
+          '#type' => 'container',
+          '#id' => $step_key . '_fields',
+          '#weight' => 1,
+        ];
+
+        foreach ($all_children as $child_id) {
+          if (isset($form[$child_id])) {
+            $form[$step_key]['fields'][$child_id] = $form[$child_id];
+            unset($form[$child_id]);
+            $limit_validation[] = [$child_id];
           }
         }
-        else {
-          foreach ($all_children as $child_id) {
-            if (isset($form[$child_id])) {
-              if($this->currentStep == count($this->steps) - 1){
-                $form['actions']['submit']['#limit_validation_errors'][] = [$child_id];
-              }else{
-                $form['actions']['next']['#limit_validation_errors'][] = [$child_id];
-              }
-            }
-          }
+
+        $form[$step_key]['fields']['actions'] = [
+          '#type' => 'actions',
+        ];
+        $back_button = $this->getBackButton($key);
+        if($back_button !== false){
+          $form[$step_key]['fields']['actions']['back_' . $key] = $back_button;
+        }
+        if($key != count($this->steps) - 1) {
+          $form[$step_key]['fields']['actions']['next_' . $key] = $this->getNextButton($key, $limit_validation);
+        }else{
+          $form[$step_key]['fields']['actions']['submit'] = $form['actions']['submit'];
         }
       }
     }
+    unset($form['actions']);
+  }
 
-    // Last step.
-    if ($this->currentStep == count($this->steps) - 1) {
-      foreach ($form as $element_key => $form_element) {
-        if (is_array($form_element) && isset($form_element['#type'])) {
-          if (isset($form['actions']['next']['#limit_validation_errors'])) {
-            unset($form['actions']['next']['#limit_validation_errors']);
-          }
-        }
-      }
+  /**
+   * get next button.
+   *
+   * @param int $step step
+   */
+  public function getNextButton($step, $limit_validation_errors = []) {
+    $step_format_settings = $this->getOneStepSettings($step)->format_settings;
+
+    return [
+      '#type' => 'button',
+      '#name' => 'next_' . $step,
+      '#value' => $step_format_settings['next_button_text'],
+      '#ajax' => [
+        'callback' => 'Drupal\idix_multistep\MultistepController::ajaxStepNext',
+        'event' => 'click',
+        'progress' => [
+          'type' => 'throbber',
+          'message' => NULL,
+        ],
+      ],
+      '#step' => $step,
+      '#limit_validation_errors' => $limit_validation_errors,
+      '#weight' => 0.1
+    ];
+  }
+
+  /**
+   * get back button.
+   *
+   * @param int $step step
+   */
+  public function getBackButton($step) {
+    $step_format_settings = $this->getOneStepSettings($step)->format_settings;
+    $button = false;
+    if (!empty($step_format_settings['back_button_show'])) {
+      // Add back button and remove validation.
+      $button = [
+        '#type' => 'button',
+        '#name' => 'back_' . $step,
+        '#value' => $step_format_settings['back_button_text'],
+        '#ajax' => [
+          'callback' => 'Drupal\idix_multistep\MultistepController::ajaxStepBack',
+          'event' => 'click',
+          'progress' => [
+            'type' => 'throbber',
+            'message' => NULL,
+          ]
+        ],
+        '#step' => $step,
+        '#limit_validation_errors' => [],
+        '#weight' => 0,
+      ];
+    }
+    return $button;
+  }
+
+  public static function ajaxStepBack(array $form, FormStateInterface $form_state){
+    $response = new AjaxResponse();
+    $test = true;
+    return $response;
+  }
+
+  public static function ajaxStepNext(array $form, FormStateInterface $form_state){
+    $response = new AjaxResponse();
+
+    $trigger = $form_state->getTriggeringElement();
+    $current_step = $trigger['#step'];
+
+    if($form_state->hasAnyErrors()){
+      $messages = [
+        '#type' => 'status_messages',
+      ];
+      $response->addCommand(new HtmlCommand('#step_' . $current_step . '_pane_messages', $messages));
+
+      $replace = $form['step_' . $current_step . '_pane']['fields'];
+
+      $response->addCommand(new ReplaceCommand('#step_' . $current_step . '_pane_fields', $replace));
+    }else{
+      $next_step = $current_step+1;
+      $response->addCommand(new HtmlCommand('#step_' . $current_step . '_pane_messages', ''));
+      $response->addCommand(new InvokeCommand('#step_' . $current_step . '_pane', 'addClass', ['multistep_pane_hidden']));
+      $response->addCommand(new InvokeCommand('#step_' . $next_step . '_pane', 'removeClass', ['multistep_pane_hidden']));
     }
 
+    return $response;
   }
 
 }
