@@ -72,7 +72,8 @@ class MultistepController extends FormStep {
         ];
 
         $form[$step_key]['fields'] = [
-          '#type' => 'container',
+          '#type' => 'fieldset',
+          '#title' => '',
           '#id' => $step_key . '_fields',
           '#weight' => 1,
         ];
