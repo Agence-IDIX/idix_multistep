@@ -160,7 +160,16 @@ class MultistepController extends FormStep {
 
   public static function ajaxStepBack(array $form, FormStateInterface $form_state){
     $response = new AjaxResponse();
-    $test = true;
+
+    $trigger = $form_state->getTriggeringElement();
+    $current_step = $trigger['#step'];
+
+    $prev_step = $current_step - 1;
+
+    $response->addCommand(new HtmlCommand('#step_' . $prev_step . '_pane_messages', ''));
+    $response->addCommand(new InvokeCommand('#step_' . $current_step . '_pane', 'addClass', ['multistep_pane_hidden']));
+    $response->addCommand(new InvokeCommand('#step_' . $prev_step . '_pane', 'removeClass', ['multistep_pane_hidden']));
+
     return $response;
   }
 
