@@ -2,6 +2,7 @@
 
 namespace Drupal\idix_multistep;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\InvokeCommand;
@@ -76,11 +77,23 @@ class MultistepController extends FormStep {
           '#title' => '',
           '#id' => $step_key . '_fields',
           '#weight' => 1,
+          '#attributes' => [
+            'class' => [
+              'multistep-fieldset'
+            ]
+          ]
         ];
+
+        $hasRequired = false;
 
         foreach ($all_children as $child_id) {
           if (isset($form[$child_id])) {
             $form[$step_key]['fields'][$child_id] = $form[$child_id];
+
+            if(isset($form[$child_id]['widget']['#required']) && $form[$child_id]['widget']['#required']){
+              $hasRequired = true;
+            }
+
             unset($form[$child_id]);
             $limit_validation[] = [$child_id];
           }
@@ -89,6 +102,11 @@ class MultistepController extends FormStep {
         $form[$step_key]['fields']['actions'] = [
           '#type' => 'actions',
         ];
+
+        if($hasRequired){
+          $form[$step_key]['fields']['actions']['#prefix'] = new FormattableMarkup('<div class="form-required-nota">champs obligatoires</div>', array());
+        }
+
         $back_button = $this->getBackButton($key);
         if($back_button !== false){
           $form[$step_key]['fields']['actions']['back_' . $key] = $back_button;
