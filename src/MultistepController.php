@@ -207,6 +207,8 @@ class MultistepController extends FormStep {
       $replace = $form['step_' . $current_step . '_pane']['fields'];
 
       $response->addCommand(new ReplaceCommand('#step_' . $current_step . '_pane_fields', $replace));
+
+      $response->addCommand(new InvokeCommand(null, 'scrollTo', ['node-subscription-multistep-form']));
     }else{
       $next_step = $current_step+1;
       $response->addCommand(new HtmlCommand('#step_' . $current_step . '_pane_messages', ''));

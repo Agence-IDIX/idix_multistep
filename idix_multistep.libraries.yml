@@ -3,3 +3,7 @@ general:
   css:
     state:
       css/idix_multistep.css: {}
+  js:
+    js/scrollTo.js: {}
+  dependencies:
+  - core/jquery
