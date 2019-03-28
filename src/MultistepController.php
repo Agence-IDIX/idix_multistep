@@ -104,7 +104,9 @@ class MultistepController extends FormStep {
         ];
 
         if($hasRequired){
-          $form[$step_key]['fields']['actions']['#prefix'] = new FormattableMarkup('<div class="form-required-nota">champs obligatoires</div>', array());
+          $form[$step_key]['fields']['actions']['#prefix'] = new FormattableMarkup('<div class="form-required-nota">@required_fields</div>', array(
+            '@required_fields' => t('Required fields')
+          ));
         }
 
         $back_button = $this->getBackButton($key);
